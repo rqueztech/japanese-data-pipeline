@@ -1,5 +1,7 @@
-# Main items
+# remove files
+*.db
 *.txt
+*.csv
 *.sh
 
 # Byte-compiled / optimized / DLL files
