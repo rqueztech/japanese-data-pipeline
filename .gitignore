@@ -1,6 +1,7 @@
 # remove files
 *.db
 *.txt
+!requirements.txt
 *.csv
 *.sh
 
