@@ -85,8 +85,46 @@ def main():
     pruned_kanji = prune_all_unique_left_kanji(left_kanji, kanji_map)
     display_all_kanji(pruned_kanji, kanji_map)
     tokenized_kanji = tokenize_all_japanese(t, left_japanese)
+    counter = 1
+    tokenized_kanji_set = {word.strip() for word in tokenized_kanji if len(word.strip())}
+    for current in tokenized_kanji:
+        counter += 1
+    tokenized_definition_map = defaultdict(str)
+    print(type(tokenized_kanji))
     print(len(tokenized_kanji))
+    print(len(tokenized_kanji_set))
 
+    words_list = list(tokenized_kanji_set)
+    placeholders = ", ".join(["?"] * len(words_list))
+
+    VOCABULARY_QUERY = f"""
+    SELECT kanji, hiragana, definition
+    FROM vocabulary_fullstack
+    WHERE kanji IN ({placeholders});
+    """
+
+    cur.execute(VOCABULARY_QUERY, words_list)
+    matched_rows = cur.fetchall()
+
+    godmap = defaultdict(list)
+    for current in matched_rows:
+        kanji = current[0]
+        hiragana_and_definition = [current[1], current[2]]
+        godmap[kanji] = hiragana_and_definition
+
+    con.close()
+
+    for word in tokenized_kanji:
+        payload = godmap[word]
+        kanji_load = []
+        for kanji_candidate in word:
+            if kanji_candidate in kanji_map:
+                kanji_load.append([kanji_candidate, kanji_map[kanji_candidate]])
+                
+        print(word, " :: ", payload)
+        if kanji_load and len(kanji_load) > 0:
+            print(kanji_load)
+    
     return 0
 
 if __name__ == "__main__":
