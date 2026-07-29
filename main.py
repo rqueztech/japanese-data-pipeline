@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import sys
 import re
 import csv
@@ -59,10 +60,12 @@ def tokenize_all_japanese(t, left_japanese):
     return [token.surface for token in t.tokenize(left_japanese)]
 
 def main():
+    db_path = os.environ.get("JAPANESE_DB")
+
     t = Tokenizer()
 
     script_dir = Path(__file__).resolve().parent
-    JAPANESE_DB = script_dir / "../japanese-database/natvocab.db"
+    JAPANESE_DB = db_path
 
     if not Path.exists:
         print("path not found...")
