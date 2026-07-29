@@ -72,7 +72,7 @@ def main():
     cur = con.cursor()
     KANJI_QUERY = "SELECT kanji, definition FROM kanji_main;"
     cur.execute(KANJI_QUERY)
-    VOCABULARY_QUERY = "SELECT kanji, definition FROM vocabulary_full_"
+    VOCABULARY_QUERY = "SELECT kanji, definition FROM vocabulary_fullstack;"
     kanji_defined_results = cur.fetchall()
     kanji_map = read_in_csv(kanji_defined_results)
     check_for_sizes(kanji_defined_results, kanji_map)
@@ -84,6 +84,9 @@ def main():
     display_all_kanji(pruned_kanji, kanji_map)
     tokenized_kanji = tokenize_all_japanese(t, left_japanese)
     print(tokenized_kanji)
+    cur.execute(VOCABULARY_QUERY)
+    allvocabulary = cur.fetchall()
+
 
 
 
