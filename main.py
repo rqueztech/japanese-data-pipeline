@@ -59,6 +59,14 @@ def check_for_sizes(kanji_defined_results, kanji_map):
 def tokenize_all_japanese(t, left_japanese):
     return [token.surface for token in t.tokenize(left_japanese)]
 
+def define_all_kanji(cleaned_word, kanji_map):
+    kanji_load = []
+    for kanji_candidate in cleaned_word:
+        if kanji_candidate in kanji_map:
+            kanji_load.append([kanji_candidate, kanji_map[kanji_candidate]])
+
+    return kanji_load
+
 def main():
     db_path = os.environ.get("JAPANESE_DB")
     t = Tokenizer()
@@ -72,7 +80,12 @@ def main():
 
     con = sqlite3.connect(JAPANESE_DB)
     cur = con.cursor()
+    ONYOMI_DOUBLES = "SELECT * FROM onyomidoubles;";
     KANJI_QUERY = "SELECT kanji, definition FROM kanji_main;"
+    cur.execute(ONYOMI_DOUBLES)
+    onyomi_doubles_result = cur.fetchall()
+    onyomi_doubles_set = {results[0] for results in onyomi_doubles_result}
+
     cur.execute(KANJI_QUERY)
     VOCABULARY_QUERY = "SELECT kanji, definition FROM vocabulary_fullstack;"
     kanji_defined_results = cur.fetchall()
@@ -90,9 +103,6 @@ def main():
     for current in tokenized_kanji:
         counter += 1
     tokenized_definition_map = defaultdict(str)
-    print(type(tokenized_kanji))
-    print(len(tokenized_kanji))
-    print(len(tokenized_kanji_set))
 
     words_list = list(tokenized_kanji_set)
     placeholders = ", ".join(["?"] * len(words_list))
@@ -114,16 +124,20 @@ def main():
 
     con.close()
 
+    full_string = []
     for word in tokenized_kanji:
+        separation_lines = "---------------------"
+        print(separation_lines)
+        full_string.append(separation_lines)
+        full_string.append("\n")
+
         payload = godmap[word]
-        kanji_load = []
-        for kanji_candidate in word:
-            if kanji_candidate in kanji_map:
-                kanji_load.append([kanji_candidate, kanji_map[kanji_candidate]])
-                
+        cleaned_word = leave_range(KANJI_RANGE, word)
+        kanji_load = define_all_kanji(cleaned_word, kanji_map)
         print(word, " :: ", payload)
         if kanji_load and len(kanji_load) > 0:
-            print(kanji_load)
+            for current in kanji_load:
+                print(current[0], " :: ", current[1])
     
     return 0
 
