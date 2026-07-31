@@ -4,6 +4,7 @@
 !requirements.txt
 *.csv
 *.sh
+!runner.sh
 *.org
 
 # Byte-compiled / optimized / DLL files
