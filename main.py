@@ -39,12 +39,10 @@ def prune_all_unique_left_kanji(left_kanji, kanji_map):
     return cleaned_array
 
 def check_for_sizes(kanji_defined_results, kanji_map):
-    if len(kanji_defined_results) != 2134:
+    if len(kanji_defined_results) != 2134 or len(kanji_map) != 2134:
         print(f"Data set is too small: {len(kanji_defined_results)}")
         return 1
-    if len(kanji_map) != 2134:
-        print(f"Map too small {len(kanji_map)}")
-
+    
 def tokenize_all_japanese(t, left_japanese):
     return [token.surface for token in t.tokenize(left_japanese)]
 
