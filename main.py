@@ -99,6 +99,20 @@ def populate_god_map(matched_rows):
         godmap[kanji] = hiragana_and_definition
     return godmap
 
+def create_prefix_set(cur):
+    PREFIX_SET = "SELECT * FROM prefix;"
+    cur.execute(PREFIX_SET)
+    onyomi_prefix_set = cur.fetchall()
+    return {results[0] for results in onyomi_prefix_set}
+    
+
+def create_suffix_set(cur):
+    SUFFIX_SET = "SELECT * FROM suffix;"
+    cur.execute(SUFFIX_SET)
+    onyomi_suffix_set = cur.fetchall()
+    return {results[0] for results in onyomi_suffix_set}
+
+
 def create_onyomi_doubles_set(cur):
     ONYOMI_DOUBLES = "SELECT * FROM onyomidoubles;"
     cur.execute(ONYOMI_DOUBLES)
@@ -144,6 +158,14 @@ def main():
     if not onyomi_doubles_set:
         print("onyomi_doubles_set failed")
 
+    onyomi_suffix_set = create_suffix_set(cur)
+    if not onyomi_suffix_set:
+        print("onyomi_suffix_set failed")
+
+    onyomi_prefix_set = create_prefix_set(cur)
+    if not onyomi_prefix_set:
+        print("onyomi_prefix_set not found")
+
     KANJI_QUERY = "SELECT kanji, definition FROM kanji_main;"
     cur.execute(KANJI_QUERY)
     kanji_defined_results = cur.fetchall()
@@ -156,10 +178,14 @@ def main():
     left_japanese = leave_range(JAPANESE_RANGE, here)
     left_kanji = leave_range(KANJI_RANGE, here)
     pruned_kanji = prune_all_unique_left_kanji(left_kanji, kanji_map)
+
     # display_all_kanji(pruned_kanji, kanji_map)
+
     tokenized_kanji = tokenize_all_japanese(t, left_japanese)
     print(tokenized_kanji)
+
     counter = 1
+
     tokenized_kanji_set = {word.strip() for word in tokenized_kanji if len(word.strip())}
     for current in tokenized_kanji:
         counter += 1
@@ -181,8 +207,6 @@ def main():
 
     godmap = populate_god_map(matched_rows)
     full_string = process_all_tokenized_kanji(godmap, tokenized_kanji, kanji_map, onyomi_doubles_set, KANJI_RANGE, kunyomi_roots_to_readings_map)
-    print(full_string)
-    print(len(full_string))
 
     return 0
 
