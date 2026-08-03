@@ -10,7 +10,7 @@ from janome.tokenizer import Tokenizer
 def leave_range(CUSTOM_RANGE, string_to_clean):
     return re.sub(CUSTOM_RANGE, '', string_to_clean)
 
-def read_in_csv(kanji_defined_results):
+def read_in_kanji_defined_results(kanji_defined_results):
     kanji_mapped = defaultdict(str)
     for current in kanji_defined_results:
         kanji = current[0]
@@ -29,14 +29,12 @@ def display_all_kanji(kanji, kanji_map):
     [print(x, kanji_map[x]) for x in kanji if x in kanji_map]
 
 def prune_all_unique_left_kanji(left_kanji, kanji_map):
-    cleaned_array = []
     seen = set()
     for x in left_kanji:
         if x in seen:
             continue
         seen.add(x)
-        cleaned_array.append(x)
-    return cleaned_array
+    return list(seen)
 
 def check_for_sizes(kanji_defined_results, kanji_map):
     if len(kanji_defined_results) != 2134 or len(kanji_map) != 2134:
@@ -54,22 +52,27 @@ def define_all_kanji(cleaned_word, kanji_map):
 
     return kanji_load
 
+def display_full_kanji_load(kanji_load, onyomi_doubles_set):
+    for current in kanji_load:
+        kanji = current[0]
+        definition = current[1]
+
+        if kanji in onyomi_doubles_set:
+            print("* ", kanji, " - ", definition)
+            continue
+        print(kanji, " - ", definition)
+
+
+
 def display_word_payload_kanjis(word, kanji_load, payload, onyomi_doubles_set, kunyomi_roots_to_readings_map, kanji_map):
     if len(word) == 1 and word in kunyomi_roots_to_readings_map:
         print(word, " :: ", kunyomi_roots_to_readings_map[word], " -> ", kanji_map[word])
     else:
         print(word, " :: ", payload)
         if kanji_load and len(kanji_load) > 0:
-            for current in kanji_load:
-                kanji = current[0]
-                definition = current[1]
+            display_full_kanji_load(kanji_load, onyomi_doubles_set)
 
-                if kanji in onyomi_doubles_set:
-                    print("* ", kanji, " - ", definition)
-                    continue
-                print(kanji, " - ", definition)
-
-def process_all_tokenized_kanji(godmap, tokenized_kanji, kanji_map, onyomi_doubles_set, KANJI_RANGE, kunyomi_roots_to_readings_map):
+def process_all_tokenized_kanji(kanji_definition_map, tokenized_kanji, kanji_map, onyomi_doubles_set, KANJI_RANGE, kunyomi_roots_to_readings_map):
     full_string = []
     print(len(tokenized_kanji))
     for word in tokenized_kanji:
@@ -78,20 +81,20 @@ def process_all_tokenized_kanji(godmap, tokenized_kanji, kanji_map, onyomi_doubl
         full_string.append(separation_lines)
         full_string.append("\n")
 
-        payload = godmap[word]
+        payload = kanji_definition_map[word]
         cleaned_word = leave_range(KANJI_RANGE, word)
         kanji_load = define_all_kanji(cleaned_word, kanji_map)
         display_word_payload_kanjis(word, kanji_load, payload, onyomi_doubles_set, kunyomi_roots_to_readings_map, kanji_map)
         full_string.append(kanji_load)
     return full_string
 
-def populate_god_map(matched_rows):
-    godmap = defaultdict(list)
+def populate_kanji_definition_map(matched_rows):
+    kanji_definition_map = defaultdict(list)
     for current in matched_rows:
         kanji = current[0]
         hiragana_and_definition = [current[1], current[2]]
-        godmap[kanji] = hiragana_and_definition
-    return godmap
+        kanji_definition_map[kanji] = hiragana_and_definition
+    return kanji_definition_map
 
 def create_word_set(CURRENT_QUERY, cur):
     cur.execute(CURRENT_QUERY)
@@ -148,7 +151,7 @@ def main():
     cur.execute(KANJI_QUERY)
     kanji_defined_results = cur.fetchall()
 
-    kanji_map = read_in_csv(kanji_defined_results)
+    kanji_map = read_in_kanji_defined_results(kanji_defined_results)
     check_for_sizes(kanji_defined_results, kanji_map)
 
     here = sys.stdin.read()
@@ -183,8 +186,8 @@ def main():
 
     con.close()
 
-    godmap = populate_god_map(matched_rows)
-    full_string = process_all_tokenized_kanji(godmap, tokenized_kanji, kanji_map, onyomi_doubles_set, KANJI_RANGE, kunyomi_roots_to_readings_map)
+    kanji_definition_map = populate_kanji_definition_map(matched_rows)
+    full_string = process_all_tokenized_kanji(kanji_definition_map, tokenized_kanji, kanji_map, onyomi_doubles_set, KANJI_RANGE, kunyomi_roots_to_readings_map)
 
     return 0
 
