@@ -26,10 +26,7 @@ def print_entire_map(kanji_map):
         counter += 1
 
 def display_all_kanji(kanji, kanji_map):
-    for x in kanji:
-        if x in kanji_map:
-            print(x, kanji_map[x])
-    print(len(kanji))
+    [print(x, kanji_map[x]) for x in kanji if x in kanji_map]
 
 def prune_all_unique_left_kanji(left_kanji, kanji_map):
     cleaned_array = []
@@ -47,7 +44,6 @@ def check_for_sizes(kanji_defined_results, kanji_map):
         return 1
     if len(kanji_map) != 2134:
         print(f"Map too small {len(kanji_map)}")
-        return 1
 
 def tokenize_all_japanese(t, left_japanese):
     return [token.surface for token in t.tokenize(left_japanese)]
@@ -99,25 +95,10 @@ def populate_god_map(matched_rows):
         godmap[kanji] = hiragana_and_definition
     return godmap
 
-def create_prefix_set(cur):
-    PREFIX_SET = "SELECT * FROM prefix;"
-    cur.execute(PREFIX_SET)
-    onyomi_prefix_set = cur.fetchall()
-    return {results[0] for results in onyomi_prefix_set}
-    
-
-def create_suffix_set(cur):
-    SUFFIX_SET = "SELECT * FROM suffix;"
-    cur.execute(SUFFIX_SET)
-    onyomi_suffix_set = cur.fetchall()
-    return {results[0] for results in onyomi_suffix_set}
-
-
-def create_onyomi_doubles_set(cur):
-    ONYOMI_DOUBLES = "SELECT * FROM onyomidoubles;"
-    cur.execute(ONYOMI_DOUBLES)
-    onyomi_doubles_result = cur.fetchall()
-    return {results[0] for results in onyomi_doubles_result}
+def create_word_set(CURRENT_QUERY, cur):
+    cur.execute(CURRENT_QUERY)
+    created_result = cur.fetchall()
+    return {results[0] for results in created_result}
 
 def create_kunyomi_root_map(cur):
     kunyomi_roots_to_readings_map = defaultdict(list)
@@ -141,6 +122,8 @@ def main():
     db_path = os.environ.get("JAPANESE_DB")
     t = Tokenizer()
 
+    print(db_path)
+    
     JAPANESE_DB = db_path
 
     if not Path.exists:
@@ -154,17 +137,14 @@ def main():
     if not kunyomi_roots_to_readings_map:
         print("kunyomi_roots_to_readings_map failed")
 
-    onyomi_doubles_set = create_onyomi_doubles_set(cur)
-    if not onyomi_doubles_set:
-        print("onyomi_doubles_set failed")
+    ONYOMI_DOUBLES_QUERY = "SELECT * FROM onyomidoubles;"
+    onyomi_doubles_set = create_word_set(ONYOMI_DOUBLES_QUERY, cur)
 
-    onyomi_suffix_set = create_suffix_set(cur)
-    if not onyomi_suffix_set:
-        print("onyomi_suffix_set failed")
+    ONYOMI_SUFFIX_QUERY = "SELECT * FROM suffix;"
+    onyomi_suffix_set = create_word_set(ONYOMI_SUFFIX_QUERY, cur)
 
-    onyomi_prefix_set = create_prefix_set(cur)
-    if not onyomi_prefix_set:
-        print("onyomi_prefix_set not found")
+    ONYOMI_PREFIX_QUERY = "SELECT * FROM prefix;"
+    onyomi_prefix_set = create_word_set(ONYOMI_PREFIX_QUERY, cur)
 
     KANJI_QUERY = "SELECT kanji, definition FROM kanji_main;"
     cur.execute(KANJI_QUERY)
