@@ -52,27 +52,36 @@ def define_all_kanji(cleaned_word, kanji_map):
 
     return kanji_load
 
-def display_full_kanji_load(kanji_load, onyomi_doubles_set):
+def display_full_kanji_load(kanji_load, onyomi_doubles_set, onyomi_prefix_set, onyomi_suffix_set):
     for current in kanji_load:
         kanji = current[0]
         definition = current[1]
+        special_symbols = []
 
         if kanji in onyomi_doubles_set:
-            print("* ", kanji, " - ", definition)
-            continue
-        print(kanji, " - ", definition)
+            special_symbols.append("*")
+        if kanji in onyomi_prefix_set:
+            special_symbols.append("p")
+        if kanji in onyomi_suffix_set:
+            special_symbols.append("s")
 
+        if not special_symbols:
+            print(kanji, " - ", definition)
 
+        print(special_symbols, kanji, " - ", definition)
 
-def display_word_payload_kanjis(word, kanji_load, payload, onyomi_doubles_set, kunyomi_roots_to_readings_map, kanji_map):
-    if len(word) == 1 and word in kunyomi_roots_to_readings_map:
+def word_is_kanji(KANJI_RANGE, word):
+    return re.search(KANJI_RANGE, word)
+
+def display_word_payload_kanjis(word, kanji_load, payload, onyomi_doubles_set, kunyomi_roots_to_readings_map, kanji_map, onyomi_prefix_set, onyomi_suffix_set, KANJI_RANGE):
+    if len(word) == 1 and word_is_kanji(KANJI_RANGE, word):
         print(word, " :: ", kunyomi_roots_to_readings_map[word], " -> ", kanji_map[word])
     else:
         print(word, " :: ", payload)
         if kanji_load and len(kanji_load) > 0:
-            display_full_kanji_load(kanji_load, onyomi_doubles_set)
+            display_full_kanji_load(kanji_load, onyomi_doubles_set, onyomi_prefix_set, onyomi_suffix_set)
 
-def process_all_tokenized_kanji(kanji_definition_map, tokenized_kanji, kanji_map, onyomi_doubles_set, KANJI_RANGE, kunyomi_roots_to_readings_map):
+def process_all_tokenized_kanji(kanji_definition_map, tokenized_kanji, kanji_map, onyomi_doubles_set, KANJI_RANGE, kunyomi_roots_to_readings_map, onyomi_prefix_set, onyomi_suffix_set):
     full_string = []
     print(len(tokenized_kanji))
     for word in tokenized_kanji:
@@ -84,7 +93,7 @@ def process_all_tokenized_kanji(kanji_definition_map, tokenized_kanji, kanji_map
         payload = kanji_definition_map[word]
         cleaned_word = leave_range(KANJI_RANGE, word)
         kanji_load = define_all_kanji(cleaned_word, kanji_map)
-        display_word_payload_kanjis(word, kanji_load, payload, onyomi_doubles_set, kunyomi_roots_to_readings_map, kanji_map)
+        display_word_payload_kanjis(word, kanji_load, payload, onyomi_doubles_set, kunyomi_roots_to_readings_map, kanji_map, onyomi_prefix_set, onyomi_suffix_set, KANJI_RANGE)
         full_string.append(kanji_load)
     return full_string
 
@@ -187,7 +196,7 @@ def main():
     con.close()
 
     kanji_definition_map = populate_kanji_definition_map(matched_rows)
-    full_string = process_all_tokenized_kanji(kanji_definition_map, tokenized_kanji, kanji_map, onyomi_doubles_set, KANJI_RANGE, kunyomi_roots_to_readings_map)
+    full_string = process_all_tokenized_kanji(kanji_definition_map, tokenized_kanji, kanji_map, onyomi_doubles_set, KANJI_RANGE, kunyomi_roots_to_readings_map, onyomi_prefix_set, onyomi_suffix_set)
 
     return 0
 
